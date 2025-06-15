@@ -28,7 +28,7 @@ def parse_price_koyeb(price_str):
         try:
             return float(match.group(1))
         except (ValueError, TypeError):
-            logger.warning(f"Koyeb: Could not parse price from '{price_str}'")
+            logger.warning(f"Koyeb: Could not parse price from value: '{match.group(1)}' in string: '{price_str}'")
             return None
     return None
 
@@ -40,11 +40,11 @@ def get_canonical_variant_and_base_chip_koyeb(gpu_name_str):
 
     if "h100" in text_to_search:
         family = "H100"
-        variant = "H100" # Koyeb page doesn't specify PCIe/SXM, so using generic H100
+        variant = "H100" # Page does not specify PCIe/SXM, so using a generic name
     elif "l40s" in text_to_search:
         family = "L40S"
         variant = "L40S"
-    elif "h200" in text_to_search: # For future use, not currently on page
+    elif "h200" in text_to_search:
         family = "H200"
         variant = "H200"
         
@@ -53,14 +53,12 @@ def get_canonical_variant_and_base_chip_koyeb(gpu_name_str):
     return None, None
 
 def generate_periodic_rows_koyeb(base_info, num_chips, per_gpu_hourly_rate):
-    """Generates the standard hourly, 6-month, and yearly rows for a Koyeb offering."""
+    """Generates the standard hourly, 6-month, and yearly rows for an offering."""
     rows = []
     if per_gpu_hourly_rate is None or not num_chips:
         return rows
 
     base_info["Number of Chips"] = num_chips
-    
-    # Koyeb lists on-demand prices. We'll use this for all projections.
     base_info["Commitment Discount - 1 Month Price ($/hr per GPU)"] = "N/A"
     base_info["Commitment Discount - 3 Month Price ($/hr per GPU)"] = "N/A"
     base_info["Commitment Discount - 6 Month Price ($/hr per GPU)"] = "N/A"
@@ -96,113 +94,81 @@ def generate_periodic_rows_koyeb(base_info, num_chips, per_gpu_hourly_rate):
     return rows
 
 def fetch_koyeb_data(soup):
-    """Fetches data from the Koyeb pricing page."""
+    """Fetches data from the Koyeb pricing page using a more robust selector strategy."""
     final_data = []
     
-    # Find the container for the GPU instance list
-    gpu_section = soup.find('div', id='compute')
-    if not gpu_section:
-        logger.error("Koyeb: Could not find the main compute section with id='compute'.")
+    section_heading = soup.find('h2', string=re.compile("Serverless Compute"))
+    if not section_heading:
+        logger.error("Koyeb: Could not find the 'Serverless Compute' section heading.")
         return []
 
-    # Prioritize the desktop grid view as it is more structured
-    desktop_grid = gpu_section.find('div', class_=re.compile("hidden grid-cols-5"))
+    parent_container = section_heading.find_parent('section')
+    if not parent_container:
+        logger.error("Koyeb: Could not find parent section of the 'Serverless Compute' heading.")
+        return []
     
-    if desktop_grid:
-        logger.info("Koyeb: Parsing with desktop grid layout.")
-        cells = desktop_grid.find_all('div', recursive=False)
-        # The structure is a flat list of divs, 5 per row.
-        for i in range(5, len(cells), 5): # Start from the first data row
-            instance_div, vcpu_div, ram_div, disk_div, price_div = cells[i:i+5]
-            
-            instance_name_tag = instance_div.find('div', class_='row')
-            instance_name = instance_name_tag.get_text(strip=True) if instance_name_tag else "N/A"
-            vram_tag = instance_div.find('div', class_='text-dark/50')
-            vram_str = vram_tag.get_text(strip=True) if vram_tag else ""
-            
-            price_str = price_div.get_text(strip=True)
-            
-            variant, family = get_canonical_variant_and_base_chip_koyeb(instance_name)
-            if not family:
-                continue
+    desktop_grid = parent_container.find('div', class_=re.compile("hidden.*grid-cols-5"))
+    if not desktop_grid:
+        logger.warning("Koyeb: Desktop grid not found. The site structure might have changed.")
+        return []
 
-            instance_price_eur = parse_price_koyeb(price_str)
-            if instance_price_eur is None:
-                continue
+    cells = desktop_grid.find_all('div', recursive=False)
+    if len(cells) <= 5:
+        logger.warning("Koyeb: No data rows found in the pricing grid.")
+        return []
 
-            num_chips_match = re.match(r'(\d+)x', instance_name, re.IGNORECASE)
-            num_chips = int(num_chips_match.group(1)) if num_chips_match else 1
-            
-            per_gpu_hourly_rate = instance_price_eur / num_chips if num_chips > 0 else 0
+    # The first 5 cells are headers, so we start processing from the 6th cell (index 5)
+    for i in range(5, len(cells), 5):
+        instance_div, vcpu_div, ram_div, disk_div, price_div = cells[i:i+5]
+        
+        instance_name_tag = instance_div.find('div', class_='row')
+        instance_name = instance_name_tag.get_text(strip=True) if instance_name_tag else "N/A"
+        
+        vram_tag = instance_div.find('div', class_='text-dark/50')
+        vram_str = vram_tag.get_text(strip=True) if vram_tag else ""
+        
+        price_str = price_div.get_text(strip=True)
+        
+        variant, family = get_canonical_variant_and_base_chip_koyeb(instance_name)
+        if not family:
+            continue
 
-            vram_gb_match = re.search(r'(\d+)', vram_str)
-            vram_gb = int(vram_gb_match.group(1)) if vram_gb_match else 0
-            # For multi-GPU instances, VRAM is often total, so we divide.
-            if num_chips > 1:
-                vram_gb = vram_gb / num_chips
+        total_instance_price = parse_price_koyeb(price_str)
+        if total_instance_price is None:
+            continue
 
-            gpu_id = f"koyeb_{instance_name.lower().replace(' ','-')}"
-            notes = f"vCPU: {vcpu_div.get_text(strip=True)}, RAM: {ram_div.get_text(strip=True)}, Disk: {disk_div.get_text(strip=True)}"
+        num_chips_match = re.match(r'(\d+)x', instance_name, re.IGNORECASE)
+        num_chips = int(num_chips_match.group(1)) if num_chips_match else 1
+        
+        per_gpu_hourly_rate = total_instance_price / num_chips if num_chips > 0 else 0
 
-            base_info = {
-                "Provider Name": STATIC_PROVIDER_NAME, "Service Provided": STATIC_SERVICE_PROVIDED,
-                "Region": STATIC_REGION_INFO, "Currency": "USD", "GPU ID": gpu_id,
-                "GPU (H100 or H200 or L40S)": family, "Memory (GB)": int(vram_gb),
-                "Display Name(GPU Type)": instance_name, "GPU Variant Name": variant,
-                "Storage Option": STATIC_STORAGE_OPTION, "Amount of Storage": disk_div.get_text(strip=True),
-                "Network Performance (Gbps)": STATIC_NETWORK_PERFORMANCE,
-                "Notes / Features": notes,
-            }
-            final_data.extend(generate_periodic_rows_koyeb(base_info, num_chips, per_gpu_hourly_rate))
+        vram_gb = 0
+        vram_match = re.search(r'(\d+)', vram_str)
+        if vram_match:
+            vram_gb = int(vram_match.group(1))
+        
+        # Normalize VRAM for multi-GPU instances
+        if num_chips > 1 and vram_gb > 0:
+            vram_gb = vram_gb / num_chips
 
-    else:
-        # Fallback to mobile view if desktop grid is not found
-        logger.warning("Koyeb: Desktop grid not found, falling back to mobile view parsing.")
-        mobile_container = gpu_section.find('div', class_=re.compile("2xl:hidden"))
-        if not mobile_container:
-             logger.error("Koyeb: Could not find mobile container either.")
-             return []
+        gpu_id = f"koyeb_{instance_name.lower().replace(' ','-')}"
+        notes = f"vCPU: {vcpu_div.get_text(strip=True)}, RAM: {ram_div.get_text(strip=True)}, Disk: {disk_div.get_text(strip=True)}"
 
-        cards = mobile_container.find_all('div', class_='col gap-2')
-        for card in cards:
-            name_price_row = card.find('div', class_='row')
-            if not name_price_row: continue
-            
-            instance_name_tag = name_price_row.find('div', class_='row')
-            instance_name = instance_name_tag.get_text(strip=True) if instance_name_tag else "N/A"
-            price_str = name_price_row.get_text(strip=True).replace(instance_name, '')
-            
-            variant, family = get_canonical_variant_and_base_chip_koyeb(instance_name)
-            if not family: continue
-
-            instance_price_eur = parse_price_koyeb(price_str)
-            if instance_price_eur is None: continue
-
-            num_chips_match = re.match(r'(\d+)x', instance_name, re.IGNORECASE)
-            num_chips = int(num_chips_match.group(1)) if num_chips_match else 1
-            
-            per_gpu_hourly_rate = instance_price_eur / num_chips if num_chips > 0 else 0
-
-            # VRAM is not easily accessible in this mobile view, so we set a default based on name
-            vram_gb = 80 if 'H100' in variant else (48 if 'L40S' in variant else 0)
-
-            spec_divs = card.find_all('div', class_='typo-body-lg')
-            vcpu, ram, disk = "N/A", "N/A", "N/A"
-            if len(spec_divs) == 3:
-                vcpu, ram, disk = [div.get_text(strip=True) for div in spec_divs]
-
-            notes = f"vCPU: {vcpu}, RAM: {ram}, Disk: {disk}"
-            gpu_id = f"koyeb_m_{instance_name.lower().replace(' ','-')}"
-            
-            base_info = {
-                "Provider Name": STATIC_PROVIDER_NAME, "Service Provided": STATIC_SERVICE_PROVIDED,
-                "Region": STATIC_REGION_INFO, "Currency": "USD", "GPU ID": gpu_id,
-                "GPU (H100 or H200 or L40S)": family, "Memory (GB)": vram_gb,
-                "Display Name(GPU Type)": instance_name, "GPU Variant Name": variant,
-                "Storage Option": STATIC_STORAGE_OPTION, "Amount of Storage": disk,
-                "Network Performance (Gbps)": STATIC_NETWORK_PERFORMANCE,
-                "Notes / Features": notes,
-            }
-            final_data.extend(generate_periodic_rows_koyeb(base_info, num_chips, per_gpu_hourly_rate))
+        base_info = {
+            "Provider Name": STATIC_PROVIDER_NAME,
+            "Service Provided": STATIC_SERVICE_PROVIDED,
+            "Region": STATIC_REGION_INFO,
+            "Currency": "USD",
+            "GPU ID": gpu_id,
+            "GPU (H100 or H200 or L40S)": family,
+            "Memory (GB)": int(vram_gb),
+            "Display Name(GPU Type)": instance_name,
+            "GPU Variant Name": variant,
+            "Storage Option": STATIC_STORAGE_OPTION,
+            "Amount of Storage": disk_div.get_text(strip=True),
+            "Network Performance (Gbps)": STATIC_NETWORK_PERFORMANCE,
+            "Notes / Features": notes,
+        }
+        final_data.extend(generate_periodic_rows_koyeb(base_info, num_chips, per_gpu_hourly_rate))
 
     return final_data
