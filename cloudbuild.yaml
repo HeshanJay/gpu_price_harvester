@@ -22,5 +22,9 @@ steps:
       - >-
         DB_PASS=gpu_db_pass:latest,VAST_AI_API_KEY=vast_ai_api_key:latest,AWS_ACCESS_KEY_ID=aws_access_key_id:latest,AWS_SECRET_ACCESS_KEY=aws_secret_access_key:latest
 
+# This tells Cloud Build where to store the logs for the build itself.
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 # Optional: Add a timeout for the build process itself
 timeout: "600s"
