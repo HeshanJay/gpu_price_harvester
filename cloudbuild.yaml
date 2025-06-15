@@ -1,0 +1,26 @@
+steps:
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "functions"
+      - "deploy"
+      - "process-all-gpu-prices-http"
+      - "--gen2"
+      - "--runtime=python311"
+      - "--region=us-central1"
+      - "--source=."
+      - "--entry-point=process-all-gpu-prices-http"
+      - "--trigger-http"
+      - "--allow-unauthenticated"
+      - "--service-account=gpu-data-script-runner@ai-chip-price-dashboard.iam.gserviceaccount.com"
+      - "--timeout=540s"
+      - "--memory=1024MB"
+      - "--set-env-vars"
+      - >-
+        SPREADSHEET_ID=1p3HWevx_bmPdSoQVM_ZDD_2Eq2f91EeD-Iv_Z0q_UPU,MASTER_WORKSHEET_NAME=All_GPU_Prices,DB_USER=price_updater_user,DB_NAME=ai_chip_prices,INSTANCE_CONNECTION_NAME=ai-chip-price-dashboard:us-central1:gpu-price-db-mysql,USE_PUBLIC_IP_FOR_CONNECTOR=true,AWS_DEFAULT_REGION=us-east-1
+      - "--set-secrets"
+      - >-
+        DB_PASS=gpu_db_pass:latest,VAST_AI_API_KEY=vast_ai_api_key:latest,AWS_ACCESS_KEY_ID=aws_access_key_id:latest,AWS_SECRET_ACCESS_KEY=aws_secret_access_key:latest
+
+# Optional: Add a timeout for the build process itself
+timeout: "600s"
