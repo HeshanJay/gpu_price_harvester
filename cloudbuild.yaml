@@ -26,5 +26,5 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
 
-# Optional: Add a timeout for the build process itself
+# Add a timeout for the build process itself
 timeout: "600s"
