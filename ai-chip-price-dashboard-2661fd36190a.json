@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "ai-chip-price-dashboard",
+  "private_key_id": "2661fd36190ac5c2ad54b2d8daea2cd06a09d552",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC5mlVp8R2m1zou\nLMyHXa9614VtHxmEVFoVcIz3/Ugb9qWcVmu/ZYYSvxRmGbSe3HvSUgeM5w55+Ir2\npvlUmJ+FZNalkW9GnOkG0uck0avRQsLTYm86wDftw1+PGhyCmYY3gNp2qdv19YTg\nKeFrU/clMkvW1YaQ/fEn/RsC+nqgwUJVeS88yCXw1azKWQu/Cu2Kto6MZoMVueqe\nkZJ/yi0YD9MjzvPkuTCBIx+2JkWtyOP3OPXRh5Chg58fdicrRGdVJvi8GICthj2c\nXk3QfOSFRmKr6oj0GvMDRtNEdoDfuSz4hPhVOJYGAgARiBgARvDJtas74/KAuFQL\nZAbe36z1AgMBAAECggEAI5dwbK3zoTRhsEwf9o9lILnmmLvfgUxJsBXSupWD9/TO\n4lGCPQRDdyHUUBX62IHwbq8TSpZeZM5gG5d+dZYE9SgWr05Z1+EsIIZeE+XvPGRA\nhxe3u7zznLEcCI2ZzQOSxN79Rcch6qMn1XLCivnhiW0BNRPiR7iiv6feP653yI6i\nsoJgDtyHdqJZ+x8bLERqKOzrDrl09A+JRY0Zq4PJp6Sw5iPxgTZ081FID9dhhlFC\naLWbMCTg+T6dz3AyIByLJKvUZpnvwW5IzL9uRRcXr9EmedgLIOxeTRX2dUPYWTeM\nJ4I4FjFITBcBz6nBtW2zJ6fYRz7e7PZu9Z063+pC6wKBgQD1QelRV5oIlfUs35Mo\nm+U5BwRilHd/YLAD9tSfeImQTU36gkaXVtCCbLxeH+RrrJ21ILjXha8ntm4rG9GZ\n/gLowueJGaVRt2JlA/eRvxeWjarqyUlMiAnNp2UgmnuDVVael0JeC8DW/8XlkMqh\nft6DNqh8YydQN/sxsWfsSAR4nwKBgQDBu4Lb8fCuq9dfHza7J0+onIaCTchhEALl\nql5Q5BWePVyq5MHC4T5NTnDkihO/LvRkqo/jBk+c2V7IuMXQe7KAgyJBLAhBCEn0\nIoko2oBZq++hlTFf7X9+79qov9TN9Hlc7ju8bcziAJNuhpMgYJqY/vthhn1sHQ7m\npWQC788t6wKBgQDdLf7bU7RfL9W3DT3qboVPY6upt5j479ptCMoBszPkRkMfuyMs\nUqeiJ6vM+tgF3tsvQP5Rp4cpulUqXWEujixTe4pRUyaLRmXfEa/P6dS8+q/8I2EO\nOtUUeXUy7P6cl3aReXnp1JGpk2sGOAj1kbPcA4v4+Xa32nSYARTmuqAFowKBgQDA\nIJe8TIomj+D9QtVica/8RY7X9w+7wsc8wOLcUfZmgfA+wrKt8/d3b01iONUwiv5w\nPv6HZSDbKm9nnGcBRUtXS7VS8LoW1IOTDBT+YQNc6rixhGX8/mmsl25AYE5JGiSp\n1tGDI1lG4M9VkzyhpWxsQqNGqrwD1iWK84blqrHKlQKBgB5qysBpU0rEg6AvOBRY\nH+J7zehdqOoSkPLjl7YfKkImEcwx4PDS4/6UNWHwMeTkVCjyABLpqs7ThrzwCxjb\njipFPIhyTHBaJ1wbUoj1pOphzK84LHcUAMByewCjrMC9bg4CvUkdlaEj7cYpYTAI\noF3jcSc1lQ39Kwj406LFJw1c\n-----END PRIVATE KEY-----\n",
+  "client_email": "gpu-data-script-runner@ai-chip-price-dashboard.iam.gserviceaccount.com",
+  "client_id": "111985771267708752661",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/gpu-data-script-runner%40ai-chip-price-dashboard.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
