@@ -27,3 +27,5 @@ PyMySQL
 python-dotenv
 requests
 SQLAlchemy
+selenium
+webdriver-manager
